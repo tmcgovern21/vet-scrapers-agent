@@ -11,9 +11,12 @@ venv/
 # Outputs
 outputs/*.xlsx
 outputs/*.csv
+outputs/*.txt
 audit_reports/*.xlsx
 debug_html/*.html
 
+# Excel lock files (Office creates these when a file is open)
+~$*.xlsx
+
 # Checkpoints
 *_checkpoint.json
-aaep_checkpoint.json
