@@ -20,31 +20,31 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from patches import (
     fix_whitespace,
+    fix_address_parentheticals,
     fix_po_box_line1,
     fix_uk_postcode,
     fix_canada_province_postal,
+    fix_uk_address_split,
+    fix_canada_address_split,
+    fix_generic_intl_address_split,
     apply_overrides,
+    post_override_us_parse,
+    US_STATE_CODES,
+    US_COUNTRY_NAMES,
 )
 
 PATCH_PIPELINE = [
     fix_whitespace,
+    fix_address_parentheticals,        # must run before any address parsing
     fix_po_box_line1,
     fix_uk_postcode,
     fix_canada_province_postal,
-    apply_overrides,  # always last — overrides win
+    fix_uk_address_split,
+    fix_canada_address_split,
+    fix_generic_intl_address_split,
+    apply_overrides,                   # always before post_override_us_parse
+    post_override_us_parse,            # re-parses US rows with empty Line 1
 ]
-
-US_STATE_CODES = frozenset([
-    "AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL",
-    "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE",
-    "NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD",
-    "TN","TX","UT","VT","VA","WA","WV","WI","WY",
-    "AS","GU","MP","PR","VI",
-])
-US_COUNTRY_NAMES = {
-    "us", "usa", "u.s.", "u.s.a.",
-    "united states", "united states of america",
-}
 
 
 def derive_source(filename: str) -> str:

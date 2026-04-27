@@ -110,6 +110,22 @@ _COUNTRY_CODES = frozenset([
     "PE","EC","VE",
 ])
 
+_US_COUNTRY_SYNONYMS = frozenset([
+    "us", "usa", "u.s.", "u.s.a.",
+    "united states", "united states of america",
+])
+
+
+def _is_non_us_country(v) -> bool:
+    """True when Country is recognizably non-US. Empty / unknown values
+    return False (treated as US-like, so US-strict checks still apply)."""
+    txt = "" if pd.isna(v) else str(v).strip()
+    if not txt:
+        return False
+    if txt.lower() in _US_COUNTRY_SYNONYMS or txt.upper() == "US":
+        return False
+    return txt.upper() in _COUNTRY_CODES or txt.lower() in _COUNTRY_NAMES
+
 
 # -------- Helpers --------
 
@@ -282,17 +298,39 @@ def _check_full_address_raw(pop: pd.Series) -> pd.Series:
     return pop.apply(_ok)
 
 
-def _check_address_line_1(pop: pd.Series) -> pd.Series:
-    def _ok(v) -> bool:
+def _check_address_line_1(pop: pd.Series, country: pd.Series | None = None) -> pd.Series:
+    """Address Line 1 must not be a URL or a phone-shaped value.
+    For US (or unknown) rows, require at least one digit (street number).
+    For non-US rows, accept any non-empty content — many UK property
+    names ('Breadstone', 'Butchers Lane', 'Duffryn Bach Farm') have no
+    street number, and demanding one is a US-bias bug, not a quality
+    standard."""
+    def _shared_fail(v) -> bool:
         txt = _as_str(v)
         low = txt.lower()
         if "http://" in low or "https://" in low:
-            return False
-        # Phone-shaped (parens or leading +) fails.
+            return True
         if re.search(r"[()+]", txt) and len(re.sub(r"\D", "", txt)) >= 7:
-            return False
-        return any(ch.isdigit() for ch in txt)
-    return pop.apply(_ok)
+            return True
+        return False
+
+    if country is None:
+        # No Country context — fall back to US-strict.
+        def _us_ok(v) -> bool:
+            return (not _shared_fail(v)) and any(ch.isdigit() for ch in _as_str(v))
+        return pop.apply(_us_ok)
+
+    out = pd.Series(False, index=pop.index)
+    for idx in pop.index:
+        v = pop.loc[idx]
+        if _shared_fail(v):
+            out.loc[idx] = False
+            continue
+        if _is_non_us_country(country.loc[idx]):
+            out.loc[idx] = bool(_as_str(v))
+        else:
+            out.loc[idx] = any(ch.isdigit() for ch in _as_str(v))
+    return out
 
 
 def _check_city(pop: pd.Series) -> pd.Series:
@@ -401,13 +439,23 @@ _TIER_2_CHECK_NAMES: dict[str, str] = {
 
 
 def _apply_tier2_string(
-    column: str, s: pd.Series, check_fn: Callable[[pd.Series], pd.Series]
+    column: str,
+    s: pd.Series,
+    check_fn: Callable[..., pd.Series],
+    df: pd.DataFrame | None = None,
 ) -> CheckResult:
     pop = _is_populated(s)
     mask = pd.Series(True, index=s.index)
     if pop.any():
         pop_idx = s.index[pop]
-        mask.loc[pop_idx] = check_fn(s.loc[pop_idx])
+        # Address Line 1 is Country-aware: UK property names lack street
+        # numbers and shouldn't fail the US-style "must contain a digit" rule.
+        if column == "Address Line 1" and df is not None and "Country" in df.columns:
+            mask.loc[pop_idx] = check_fn(
+                s.loc[pop_idx], country=df["Country"].loc[pop_idx]
+            )
+        else:
+            mask.loc[pop_idx] = check_fn(s.loc[pop_idx])
     return CheckResult(
         _TIER_2_CHECK_NAMES[column], column, 2, mask, _problem_dict(s, mask)
     )
@@ -560,7 +608,7 @@ def run_all_checks(df: pd.DataFrame, meta: LoadMeta) -> list[CheckResult]:
         sub = df[col]
         if isinstance(sub, pd.DataFrame):
             continue
-        results.append(_apply_tier2_string(col, sub, check_fn))
+        results.append(_apply_tier2_string(col, sub, check_fn, df))
 
     if "Latitude" in df.columns and "Latitude" not in meta.duplicate_normalized:
         results.append(_apply_latlng("Latitude", df["Latitude"], -90.0, 90.0))
