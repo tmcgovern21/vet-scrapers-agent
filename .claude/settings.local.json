@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash('c:/Claude Code/Projects/vet-scrapers-agent/.venv/Scripts/python.exe' -c ' *)"
+      "Bash('c:/Claude Code/Projects/vet-scrapers-agent/.venv/Scripts/python.exe' -c ' *)",
+      "Bash(*)"
+    ],
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Edit(scrapers/**)",
+      "Edit(auditor/**)",
+      "Write(scrapers/**)",
+      "Write(auditor/**)",
+      "Write(outputs/**)"
     ]
   }
 }
