@@ -38,12 +38,16 @@ PATCH_PIPELINE = [
     fix_address_parentheticals,        # must run before any address parsing
     fix_po_box_line1,
     fix_uk_postcode,
-    fix_canada_province_postal,
     fix_uk_address_split,
-    fix_canada_address_split,
     fix_generic_intl_address_split,
-    apply_overrides,                   # always before post_override_us_parse
-    post_override_us_parse,            # re-parses US rows with empty Line 1
+    apply_overrides,                   # flips Country for mistagged rows
+    # Canada and US fixes run AFTER overrides so newly-flipped rows get
+    # the right country-specific parsing (e.g. source 376 was tagged US,
+    # override flips it to Canada; fix_canada_* must run post-flip to
+    # extract the postal code from the address).
+    fix_canada_province_postal,
+    fix_canada_address_split,
+    post_override_us_parse,
 ]
 
 

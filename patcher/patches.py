@@ -202,8 +202,17 @@ def fix_uk_postcode(df, source=None):
     return df, changes
 
 
+_CA_POSTAL_VALID_RE = re.compile(
+    r"^[ABCEGHJ-NPRSTVXY]\d[A-Z]\s?\d[A-Z]\d$", re.IGNORECASE,
+)
+
+
 def fix_canada_province_postal(df, source=None):
-    """Canada rows: fill empty State from province code; empty Zip from postal."""
+    """Canada rows: fill empty State from province code; fill OR replace Zip
+    from postal pattern. Replaces any existing Zip that doesn't match the
+    canonical Canadian postal format (the scraper's usaddress run on
+    US-tagged-but-actually-Canadian addresses can produce garbage like
+    '0N0' from 'R0G 0N0' — see source 376)."""
     changes = []
     if "Country" not in df.columns:
         return df, changes
@@ -220,13 +229,18 @@ def fix_canada_province_postal(df, source=None):
                 sid = _get(df.loc[i], "Source ID")
                 _record(changes, sid, "State", "", code, "fix_canada_province_postal")
                 df.at[i, "State"] = code
-        if "Zip" in df.columns and not _get(df.loc[i], "Zip"):
+        if "Zip" in df.columns:
             mz = CA_POSTAL_RE.search(full)
             if mz:
                 postal = (mz.group(1) + " " + mz.group(2)).upper()
-                sid = _get(df.loc[i], "Source ID")
-                _record(changes, sid, "Zip", "", postal, "fix_canada_province_postal")
-                df.at[i, "Zip"] = postal
+                current = str(_get(df.loc[i], "Zip")).strip()
+                # Replace if empty OR not a valid Canadian postal (scraper
+                # garbage like "0N0" should be overwritten with "R0G 0N0").
+                if not _CA_POSTAL_VALID_RE.match(current.upper()):
+                    sid = _get(df.loc[i], "Source ID")
+                    _record(changes, sid, "Zip", current, postal,
+                            "fix_canada_province_postal")
+                    df.at[i, "Zip"] = postal
     return df, changes
 
 
