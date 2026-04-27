@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash('c:/Claude Code/Projects/vet-scrapers-agent/.venv/Scripts/python.exe' -c ' *)"
+    ]
+  }
+}

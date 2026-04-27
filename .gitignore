@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# Outputs
+outputs/*.xlsx
+outputs/*.csv
+audit_reports/*.xlsx
+debug_html/*.html
+
+# Checkpoints
+*_checkpoint.json
+aaep_checkpoint.json
