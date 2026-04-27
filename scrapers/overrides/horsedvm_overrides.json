@@ -1,0 +1,16 @@
+{
+  "376": {
+    "Country": "Canada",
+    "State": "MB",
+    "_reason": "Source mistagged Manitoba practice as countryId-236 (US)"
+  },
+  "363": {
+    "Country": "United States",
+    "State": "CA",
+    "_reason": "Source mistagged Somis CA practice as Canada"
+  },
+  "296": {
+    "Country": "United States",
+    "_reason": "Source HTML had no countryId class on this record"
+  }
+}
