@@ -53,7 +53,7 @@ COLUMN_ALIASES: dict[str, list[str]] = {
     "Name":               ["Name / Credentials", "Contact Name"],
     "Credentials":        ["Qualifications", "Title"],
     "Practice / Company": ["Practice Name", "Practice / Clinic"],
-    "Specialties":        ["Specialty", "Services", "Species Treated"],
+    "Specialties":        ["Specialty", "Services"],
     "Phone":              ["Business Phone", "Phone 1"],
     "Phone 2":            ["Cell Phone", "Secondary Phone"],
     "Zip":                ["ZIP", "Postal Code"],

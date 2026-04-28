@@ -20,3 +20,6 @@ debug_html/*.html
 
 # Checkpoints
 *_checkpoint.json
+
+# Probe / investigation scratch (per-scraper experimental scripts and dumps)
+investigation/

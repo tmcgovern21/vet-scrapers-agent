@@ -25,6 +25,19 @@ These MUST exist in every output, even if empty.
                     (may include credentials for sites that
                     don't separate them)
 
+#### AAHA exception (hospital-level data)
+AAHA records are practice-level, not practitioner-level — each row is an
+accredited hospital, not a vet. The Name and Credentials fields are blank
+by design; the hospital name lives in Practice / Company. The AAHA detail
+page does expose a list of veterinarians per hospital, but per the
+hospital-level contract for AAHA we keep it as a Tier-3 `Veterinarians`
+column (semicolon-delimited) rather than pivoting to per-vet rows. The
+auditor treats empty Name as informational (not a Tier 1 failure) when
+Source Site == "AAHA". A single physical hospital may also appear with
+two distinct recnos when it holds both a General Practice and a Referral
+accreditation — these are NOT duplicates and should NOT be deduped by
+address.
+
 ### Tier 2: Standard (include if the site provides)
 Canonical names in parentheses. Synonyms are accepted —
 the auditor maps synonyms to canonical via COLUMN_ALIASES
@@ -81,7 +94,7 @@ COLUMN_ALIASES = {
     "Name":              ["Name / Credentials", "Contact Name"],
     "Credentials":       ["Qualifications", "Title"],
     "Practice / Company":["Practice Name", "Practice / Clinic"],
-    "Specialties":       ["Specialty", "Services", "Species Treated"],
+    "Specialties":       ["Specialty", "Services"],
     "Phone":             ["Business Phone", "Phone 1"],
     "Phone 2":           ["Cell Phone", "Secondary Phone"],
     "Zip":               ["ZIP", "Postal Code"],

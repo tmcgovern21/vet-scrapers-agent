@@ -219,6 +219,12 @@ def check_name_nonempty(df: pd.DataFrame) -> CheckResult:
         return _missing_column_result("name_nonempty", "Name", 1, df.index)
     s = df["Name"]
     mask = _is_populated(s)
+    # AAHA exception (hospital-level data): empty Name is by design; see
+    # SCRAPER_CONTRACT.md "AAHA exception". Force-pass empty rows when
+    # Source Site == "AAHA" so the Tier 1 check doesn't flag every row.
+    if "Source Site" in df.columns:
+        is_aaha = df["Source Site"].astype(str).str.strip().str.upper() == "AAHA"
+        mask = mask | is_aaha
     return CheckResult("name_nonempty", "Name", 1, mask, _problem_dict(s, mask))
 
 
